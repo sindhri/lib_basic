@@ -1,3 +1,9 @@
+%20190920, plot log, simplified process by using power_ave from
+%FFT_topoplot_step1
+%20190918, add the line of calculating log back in
+%20190918, removed 'plotrad', 0.51. it would remove the areas outside of
+%the head area, instead of increasing the size of the head
+
 
 %input power from step1, then eyeball the maplimits
 %maplimits is a cell, each [] has a min and max for a particular frequency
@@ -8,7 +14,7 @@
 %20160414, removed the log transfer
 %20180125, added exception for nan case, no plot skip
 
-function [data_plot,title_names]=FFT_topoplot_step2(power,maplimits)
+function maplimits=FFT_topoplot_step2(power,maplimits)
 
 frequency_range_cell = power.frequency_range_cell;
 condition_names = power.condition_names;
@@ -25,65 +31,56 @@ for i= 1:nf
 end
 
 
-%prepare and convert data
-%power_log = log(power.data);
-power_ave = squeeze(mean(power.data,1));
+%power_ave = squeeze(mean(power.data,1));
 
-data=zeros(nc,nchan,nf);
-index=zeros(nc*nchan*nf,1);
-m = 1;
-for i = 1:nc
-    for j = 1:nchan
-        for p = 1:nf
-            index(m) = (i-1)*nchan*nf+(j-1)*nf+p;
-            data(i,j,p) = power_ave(index(m));
-            m = m+1;
-        end
-    end
-end
-
-data_converted = zeros(nf,nc,nchan);
-for i = 1:nf
-    for j = 1:nc
-        for p = 1:nchan
-            data_converted(i,j,p) = data(j,p,i);
-        end
-    end
-end
-
+%switch to plot log or raw
+%power_to_plot = mean(power.power_ave,4);
+power_to_plot = mean(power.power_ave_log,4);
 
 %make plots
+%nchan = nchan-1; %not plot 129
 
 eloc = readlocs('GSN-HydroCel-129_removedtop3.sfp');
+%eloc = readlocs('GSN-HydroCel-128_removedtop3.sfp');
 %maplimits = {[-4,4],[-3,3]};
-data_plot = zeros(nchan,nf*(nc+1));
 m=1;
 title_names=cell(1);
 load('colormap_red_blue.mat');
 cmap = red_blue;
 for i = 1:nf
     for j = 1:nc
-        data_temp = data_converted(i,j,:);
-        if isnan(data_temp)
+        data_plot = power_to_plot(:,i,j);
+        if isnan(data_plot)
             continue
         end
-        data_plot(:,m) = squeeze(data_temp);
         figure;
 
         if nargin==2 
             if maplimits{i}(1)==0
                 cmap(1:31,:)=[];
             end
-%            topoplot(data_plot(:,m),eloc,'maplimits',maplimits{i},'plotrad',0.51);
-            topoplot(data_plot(:,m),eloc,'maplimits',maplimits{i},'colormap',cmap,'plotrad',0.51,'electrodes','on','emarker',{'o','k',[],1});
         else
+            datam = mean(data_plot);
+            datasd = std(data_plot);
+            maplimits{i} = [datam - datasd*3, datam+datasd*3];
+        end
 %            topoplot(data_plot(:,m),eloc,'plotrad',0.51);
-            topoplot(data_plot(:,m),eloc,'plotrad',0.51,'electrodes','on','emarker',{'o','k',[],1});
-        end            
+  %          topoplot(data_plot(:,m),eloc,'plotrad',0.51,'electrodes','on','emarker',{'o','k',[],1});
+        topoplot(data_plot,eloc,'maplimits',maplimits{i},'colormap',cmap,...
+            'electrodes','on','emarker',{'o','k',[],1},'whitebk','on');
+                    
         title_names{m} = [freq_names{i} ' ' power.group_name ' ' condition_names{j}];
         h=title(title_names{m});
-        set(h,'interpreter','none');
-        colorbar;
+        set(h,'interpreter','none','FontSize',20);
+        cb = colorbar;
+        set(cb,'FontSize',15);
+%        pos = get(cb,'Position');
+%        cb.Label.Position = [pos(1) maplimits{i}(2)*1.5]; % to change its position
+ %       cb.Label.Rotation = 0;
+ %       cb.Label.String = 'Poewr (Log)';
+ %       cb.Label.FontSize = 15;
+        
+        set(gcf,'Position',[100 100 500 500]);
         
         if ~exist('plot_fullhead/','dir')
             mkdir('plot_fullhead');

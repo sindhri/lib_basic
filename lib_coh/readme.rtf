@@ -1,0 +1,27 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf600
+\cocoascreenfonts1{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww9000\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 20190401 Preprocess:\
+\
+filter\
+segmented to -1000 to 1500 (b/c coherence needs 500ms to calculate on each end)\
+artifact detection,\
+bad channel replacement\
+OAR, \
+artifact detection, \
+bad channel replacement\
+baseline correction, \
+for eyes open eyes closed, need to export to .mat matlab format\
+\
+Then\
+use either coh_read_mat to read .mat files, or coh_ITC_read_egi to read .raw files\
+use coh_get_channel_pair_names to settle the names for coherence and built a cluster-name montage.\
+use coh_calculation to calcuate the coherence in a large frequency range\
+then use coh_export_fulltime to export the values.\
+1cond specific programs were adjusted for data with only 1 condition, thus no comparison.\
+\
+then plot. haven\'92t adjusted it yet.}

@@ -3,7 +3,7 @@
 %20150616, added output nogo_go as the difference, so that it could be used
 %to make grant plots
 
-function nogo_go = TS_coh_plot(COH,freq_want)
+function nogo_go = coh_plot(COH,freq_want)
 
 all_coh = COH.data;
 timesout = COH.times;

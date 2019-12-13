@@ -19,10 +19,12 @@
 %uigetfile
 %20170612 added testmode only calculate one subject one condition
 %20170615, change it to only calculate one subject
+%20180412, added downsampling ability to make bomb data compatible
+%20190214, added option for reading .set single ID+condition files
 
 function ITC_single_file_vbaseline_one_subject(category_names,baseline,...
     vbaseline,group_name,id_type,freqs,...
-    pathname,result_foldername,testmode, subject_ID)
+    pathname,result_foldername,testmode, subject_ID,target_rate)
 
 
     file_list = dir(pathname);
@@ -30,28 +32,39 @@ function ITC_single_file_vbaseline_one_subject(category_names,baseline,...
     m = 1;
     for i = 1:length(file_list)
         temp = file_list(i).name;
-        if strcmp(temp(1),'.')~=1 && strcmp(temp(length(temp)-3:length(temp)),'.raw')
+        if strcmp(temp(1),'.')~=1 && strcmp(temp(length(temp)-3:length(temp)),'.raw') || strcmp(temp(length(temp)-3:length(temp)),'.set')
             filename = temp;
-            
-            switch id_type
-                case 1
-                    [id,session] = find_id(filename);
-                case 2
-                    [id,session] = find_id2(filename);
-                case 3
-                    [id,session] = find_id_TS(filename);
-                case 4
-                    [id,session] = find_id4(filename);
-            end
+            [~,~,file_ext] = fileparts(filename);
+            [id, ~] = ITC_find_id(id_type, filename);
             
             if strcmp(id,subject_ID)==1
-        
+                if strcmp(file_exp, 'raw')==1
+                
                 [EEG,~] = get_EEG_vbaseline(pathname,filename,...
                     category_names,baseline,vbaseline,group_name,id_type);
-            
-                    ITC_calculation_single_file_vbaseline(EEG,freqs,...
+                else
+                    
+                if nargin==10
+                    target_rate = EEG.srate;
+                else
+                    EEG = ITC_downsampling_EEG(EEG,target_rate); %added downsampling ability
+                end
+                
+                ITC_calculation_single_file_vbaseline(EEG,freqs,...
                 result_foldername,testmode);
                 m = m+1;
+                else
+                    if strcmp(file_exp, 'set')==1
+                        EEG = pop_loadset([data_folder filename]);
+                        EEG.group_name = '';
+                        EEG.vbaseline = vbaseline;
+                        freq_limits = [3,30];
+
+                         ITC_calculation_single_file_single_condition(EEG,freq_limits,...
+                            id_type,testmode, result_folder);
+                        m = m+1;
+                    end
+                end
             end
               
             if testmode == 'y'

@@ -15,7 +15,8 @@
 %20160317, changed the location files to be default eeglab ones....did not
 %test it yet
 %20160702, added selected_condition, otherwise it defaults to be the first
-%2
+%20180514, enable usage of flexible oscillation_type, so can use iERSP, and
+%iITC
 
 
 function ALLEEG = ITC_prepare_data_for_heatmap_single_file(IE, foi,net_type,...
@@ -101,7 +102,7 @@ end
 %id_type=3, TS specific, two types, Hxxx uses id_type=1, otherwise
 %everything till the second dot(.).
 
-
+%20180514, modified to make oscillation_type flexible
 function foi_struct = get_one_freq_for_heatmap(IE,foi,oscillation_type)
     foi_index = find_valid_pos(foi,IE.freqs);
 
@@ -119,13 +120,7 @@ function foi_struct = get_one_freq_for_heatmap(IE,foi,oscillation_type)
     foi_struct.name_for_column = name_for_column;
     foi_struct.category_names = IE.category_names;
 
-    if strcmp(oscillation_type,'ERSP')
-        foi_struct.data = squeeze(mean(IE.ERSP(foi_index(1):foi_index(2),:,:,:,:),1)); %data: times * nc *ns * chan
-    elseif strcmp(oscillation_type,'ITC')
-        foi_struct.data = squeeze(mean(IE.ITC(foi_index(1):foi_index(2),:,:,:,:),1)); %data: times * nc *ns * chan
-    else
-        fprintf('type must be either ERSP or ITC\n');
-    end
+    foi_struct.data = squeeze(mean(IE.(oscillation_type)(foi_index(1):foi_index(2),:,:,:,:),1)); %data: times * nc *ns * chan
 end
 
 %find the index of items on a evenly distributed continous list, and the adjusted item

@@ -1,0 +1,21 @@
+%20191204
+%need to update for the project specific path
+%5 hours for ICA
+
+function create_a_job(datafilename,project_name)
+fid = fopen(['jobs/job_' datafilename '.sh'],'w');
+fprintf(fid,'#!/usr/bin/bash\n');
+fprintf(fid,'#SBATCH -J %s\n',datafilename);
+fprintf(fid,'#SBATCH -n 1\n');
+
+fprintf(fid,'#SBATCH -t 05:00:00\n');
+fprintf(fid,'#SBATCH -N 1\n');
+fprintf(fid,'#SBATCH --mem-per-cpu=4g\n'); %changed from 8g to 2g
+fprintf(fid,'#SBATCH -c 2\n'); %changed from 4 to 2 cpu
+fprintf(fid,'module load MATLAB/2016b\n');
+content = 'matlab -nodisplay -nojvm -nosplash -nodesktop -r';
+content = [content '"addpath(''/ysm-gpfs/home/jw646/project/MADE_pipeline/'];
+content = [content project_name '/'');run_MADE_' project_name '('' datafilename '');exit;"\n']);
+fprintf(fid,content];
+fclose(fid);
+end

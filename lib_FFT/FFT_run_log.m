@@ -1,3 +1,4 @@
+%20190814, added option of taking eeglab .set file
 %20130204, delete Impedances from netstaion output
 %20130129
 
@@ -29,15 +30,25 @@
 %20160622, added channel_list_names
 %20170224, updated id_type that allows 2 for TRP, taking everything that's
 %before a dot as an id.
+%20190330, added 'clear Tech_Markup' for manually inserted tag situation
 
 function [power,ntrials,power_single] = FFT_run_log(channel_list_cell,...
-    frequency_range_cell,channel_list_names,id_type)
+    frequency_range_cell,channel_list_names,id_type,file_type)
 
 if nargin==3
     id_type = 1;
+    file_type= 'mat';
 end
 
-[~,pathname] = uigetfile('*.mat',pwd);
+if nargin == 4
+    file_type = 'mat';
+end
+
+if strcmp(file_type, 'mat')==1
+    [~,pathname] = uigetfile('*.mat',pwd);
+else
+    [~,pathname] = uigetfile('*.set',pwd);
+end
 file_list = dir(pathname);
 
 power.filenames = cell(1);
@@ -45,23 +56,27 @@ power.filenames = cell(1);
 power.data = [];
 power.data_log = [];
 ntrials.data = [];
-m = 0;
+
 n=0;
 label_created = 0;
 for i = 1:length(file_list)
     temp = file_list(i).name;
-    if strcmp(temp(1),'.')~=1
-       if strcmp(temp(length(temp)-3:length(temp)),'.mat');
+    if strcmp(temp(1),'.')==1
+        continue;
+    end
+    if strcmp(temp(length(temp)-3:length(temp)),'.mat') || strcmp(temp(length(temp)-3:length(temp)),'.set')
            n = n + 1;
            filename = temp;
 
            fprintf('%s\n',filename);
-           data = read_mat_file(pathname,filename);
+           
+%           if strcmp(filename(1:4),'5073')~=1
+%               continue;
+%           end
+           data = read_input_file(pathname,filename,file_type);
            data.channel_list = channel_list_cell;
            data.frequency_list = frequency_range_cell;
            data.channel_list_names = channel_list_names;
-
-
 
                 data = FFT_process_single_file(data);
                 power_single = data;
@@ -84,7 +99,7 @@ for i = 1:length(file_list)
 
               ntrials.ids{n} = power.ids{n};
            ntrials.label = data.conditions;
-       end
+
     end
 
 end
@@ -119,37 +134,71 @@ function id=find_id2(filename)
     id = filename(1:dots(1)-1);
 end
 
-
-function data = read_mat_file(pathname,filename)
-    load([pathname filename]);
-    data.filename = filename;
-    data.pathname = pathname;
-    data.samplingRate = samplingRate;
-    clear filename;
-    clear pathname;
-    clear samplingRate;
-    clear ECI_TCPIP_55513;
-    t = who;
-    m = 1;
-    n_datapoint= 0;
-    for i = 1:length(t)
-        variable_name = t{i};
-        if length(variable_name) >=10 
-            if strcmp(variable_name(1:10),'Impedances')==1
-                continue;
+%20190814, file_type = 'mat', or file_type = 'set';
+function data = read_input_file(pathname,filename,file_type)
+    if strcmp(file_type,'mat') == 1
+        load([pathname filename]);
+        data.filename = filename;
+        data.pathname = pathname;
+        data.samplingRate = samplingRate;
+        clear filename;
+        clear pathname;
+        clear samplingRate;
+        clear ECI_TCPIP_55513;
+        clear Tech_Markup;
+        clear Marks
+        t = who;
+        m = 1;
+        n_datapoint= 0;
+        for i = 1:length(t)
+            variable_name = t{i};
+            if length(variable_name) >=10 
+                if strcmp(variable_name(1:10),'Impedances')==1
+                    continue;
+                end
+            end
+            if strcmp(variable_name,'data') ~=1 
+                data.conditions{m} = t{i};
+                data.(data.conditions{m}) = eval([data.conditions{m}]);
+                if n_datapoint ==0 
+                    n_datapoint = size(data.(data.conditions{m}),2);
+                end
+                data.ntrials(1,m) = size(data.(data.conditions{m}),3);
+                m = m + 1;
             end
         end
-        if strcmp(variable_name,'data') ~=1 
-            data.conditions{m} = t{i};
-            data.(data.conditions{m}) = eval([data.conditions{m}]);
-            if n_datapoint ==0 
-                n_datapoint = size(data.(data.conditions{m}),2);
-            end
-            data.ntrials(1,m) = size(data.(data.conditions{m}),3);
-            m = m + 1;
+        data.duration = n_datapoint/data.samplingRate;
+    else
+        addpath('/Users/wu/Documents/MATLAB/work/toolbox/eeglab14_0_0b/');
+        addpath(genpath('/Users/wu/Documents/MATLAB/work/toolbox/eeglab14_0_0b/functions'));
+        EEG = pop_loadset([pathname filename]);
+        EEG = eeg_checkset(EEG);
+        tempdata = EEG.data;
+        data.filename = filename;
+        data.pathname = pathname;
+        data.samplingRate = EEG.srate;
+        event = EEG.event;
+        %check whether the first event is at the same latency as the second
+        %event, if so remove the first.
+        if event(1).latency == event(2).latency
+            event(1) = [];
         end
+        all_events = extractfield(event,'type');
+        [unique_events,index_unique_events] = unique(all_events);
+        n_condition = length(unique_events);
+        
+        n_datapoint= 0;
+        for i = 1:n_condition
+            variable_name = unique_events{i};
+            data.conditions{i} = variable_name;
+            event_indexes = find(strcmp(all_events,variable_name));
+            unique_event_indexes = unique(extractfield(event(event_indexes),'epoch'));
+            data.(variable_name) = tempdata(:,:,unique_event_indexes);
+            data.ntrials(1,i) = size(tempdata,3);
+            n_datapoint = size(tempdata,2);
+        end
+        data.duration = n_datapoint/data.samplingRate;
     end
-    data.duration = n_datapoint/data.samplingRate;
 end
 
 function export_power_text(power)

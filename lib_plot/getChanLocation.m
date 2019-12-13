@@ -5,15 +5,16 @@
 %1. 129hydrocell
 %2. old 129GSN
 
+%20190122, removed G03 dependency to work on jia's mac as well
+
 function location = getChanLocation(net_type)
 
-pd = strcat('/Users/MacG03/',...
-    'Documents/MATLAB/work/lib_basic/lib_plot/',...
-    'chan_location/');
+%pd = strcat('/Users/MacG03/',...
+%    'Documents/MATLAB/work/lib_basic/lib_plot/',...
+%    'chan_location/');
 
 if nargin==0
-    filename = uigetfile([pd,...
-        '*.loc'],'choose the channel location file');
+    filename = uigetfile('*.loc','choose the channel location file');
 else
     switch net_type
         case 1
@@ -23,7 +24,7 @@ else
     end
 end
 
-fid=fopen([pd filename],'r');
+fid=fopen(filename,'r');
 
 nchan=129;
 location=zeros(nchan,2);

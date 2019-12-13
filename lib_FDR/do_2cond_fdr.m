@@ -9,7 +9,12 @@
 %2013-04-25, added squeeze
 %20171107 removed all defaults, fixed baseline_dpt issue, need to input
 %baseline_dpt datapoint, not just baseline_dpt
-function report = do_2cond_fdr(cond1, cond2, dependency,baseline_dpt,channel_list)
+%there is another wapper for this function, do_2cond_struct, addes srate
+%and channel_list and name to the report
+%only use this function when you want to do a quick and easy comparison
+%otherwise use 'do_2cond_struct'
+function report = do_2cond_fdr(cond1, cond2, dependency,baseline_dpt,...
+    channel_list)
 
 
 %baseline_dpt = 25;
@@ -64,6 +69,8 @@ report.sigwithoutFDR = count;
 report.channel_list = channel_list;
 report.p_list = p_list;
 report.p_sign = p_list_sign;
-report.n = n;
+report.n = length(cond1);
 report.t_list = t_list;
 report.baseline_dpt = baseline_dpt;
+
+end

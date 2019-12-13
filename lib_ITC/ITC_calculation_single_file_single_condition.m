@@ -28,6 +28,9 @@
 %20171104, to fit stefon's data, would be easier for clustering too
 %input one single condition, just compute the full head oscillation
 %if testmode = 'y', calculate one channel.
+
+%20190214, fixed a bug in using ITC_find_id;
+
 function ITC_calculation_single_file_single_condition(EEG,freq_limits,...
     id_type, testmode, foldername)
 
@@ -36,17 +39,8 @@ if nargin==4
 end
 
     filename = EEG.filename(1:length(EEG.filename)-4);
-    switch id_type
-        case 1 
-            id = find_id(filename);
-        case 2
-            id = find_id2(filename);
-        case 3
-            id = find_id_TS(filename);
-        case 4
-            id = find_id4(filename);
-    end
-
+    id = ITC_find_id(id_type,filename);
+ 
 etimes = EEG.times;
 group_name = EEG.group_name;
 
@@ -235,48 +229,3 @@ function z = r_to_z(x)
 z = 1/2*log((1+x)/(1-x));
 end
 
-function [id,session] = find_id(filename) 
-    first = [];
-    last = [];
-    for i = 1:length(filename)
-        if ~isempty(str2num(filename(i))) && isempty(first)
-            first = i;
-            break
-        end
-    end
-    for i = first+1:length(filename)
-        if isempty(str2num(filename(i))) && isempty(last)
-            last = i-1;
-            break
-        end
-    end
-    id = filename(first:last);
-    session = '1';
-end
-
-%id is the digits before the first dot(.), 
-%Works for TRP after replacing . with _
-function [id,session]=find_id2(filename)
-    dots = find(filename=='.');
-    id = filename(1:dots(1)-1);
-    session = '1';
-end
-
-function [id,session]=find_id4(filename)
-    underscores = find(filename=='_');
-    id = filename(1:underscores(1)-2);
-    session = '1';
-end
-
-%id is either H with a number, or everything before the second dot.
-function [id,session]=find_id_TS(filename)
-    if filename(3)=='H'
-        id = find_id(filename);
-        id = strcat('RDH',id);
-        session = '1';
-    else
-        dots = find(filename=='.');
-        id = filename(1:dots(1)-1);
-        session = filename(dots(1)+1:dots(2)-1);
-    end
-end

@@ -1,5 +1,6 @@
 %20160211, renamed foi_type to oscillation_type
 %added explicit pathname
+%20180316, if group_name doesn't exist, use ''
 
 function IE = ITC_fullhead_recompose(oscillation_type,pathname)
 if nargin==1
@@ -34,7 +35,11 @@ end
 
 IE.(oscillation_type) = data_all;
 IE.oscillation_type = oscillation_type;
-IE.group_name = oscillation.group_name;
+if isfield(oscillation,'group_name')
+    IE.group_name = oscillation.group_name;
+else
+    IE.group_name = '';
+end
 IE.freqs = oscillation.freqs;
 IE.times = oscillation.times;
 IE.ntimes = oscillation.ntimes;

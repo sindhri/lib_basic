@@ -23,6 +23,9 @@
 %changed it to positive-red, negative-blue
 
 %20170831, input alpha_level, default 0.05
+%adjusted title position based on plotting 1-p instead of log
+
+%20190127, fixed a baseline bug
 
 function plotMap_angleAxis_log2_wholehead_2017(p_matrix_pos, p_matrix_neg,...
     net_type,srate,title_text,alpha_level)
@@ -44,7 +47,7 @@ axis_lower = 1 - alpha_level;
 %criterion_upper = 0.05;
 %criterion_lower = 0.001;
 
-baseline = 100/(1000/srate);
+baseline = 100; %default it to 100
 
 [channel,datapoint]=size(p_matrix_pos);
 %for a = 1:channel
@@ -119,8 +122,9 @@ for i = 1:channel
     set(h,'fontsize', 12,'fontweight','bold','fontname','arial');
 end
 
-t = text(10^4,10^28,title_text);
-set(t,'interpreter','none','fontsize',20);
+%t = text(10^4,10^28,title_text);
+t = text(5000,2,title_text);
+set(t,'interpreter','none','fontsize',14);
 
 set(gcf,'color','w');
 hold off;

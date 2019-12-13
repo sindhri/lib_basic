@@ -10,6 +10,8 @@
 
 %2013-04-15, added chan_list and net_type(1 hydro129; 2, GSN129)
 %2014-07-28, gather info in struct
+%2019-01-22, replaced 'baseline' with 'baseline_dpt'
+
 function [p_matrix_pos, p_matrix_neg] = plot_selected_channels_p_log_wholehead_struct(report,...
     pre_or_post_fdr,net_type)
 
@@ -36,17 +38,17 @@ p_list_sign = report.p_sign;
 
 
 total_n_chan = 129;
-baseline =report.baseline;
+baseline_dpt =report.baseline_dpt;
 
-p_matrix_pos = ones(total_n_chan, baseline+ndatapoint);
-p_matrix_neg = ones(total_n_chan, baseline+ndatapoint);
+p_matrix_pos = ones(total_n_chan, baseline_dpt+ndatapoint);
+p_matrix_neg = ones(total_n_chan, baseline_dpt+ndatapoint);
 
 for i = 1:nchan
     for j = 1:ndatapoint
         if p_list_sign(i,j) > 0
-            p_matrix_pos(chan_list(i),baseline + j) = p_list(i,j);
+            p_matrix_pos(chan_list(i),baseline_dpt + j) = p_list(i,j);
         else
-            p_matrix_neg(chan_list(i),baseline + j) = p_list(i,j);
+            p_matrix_neg(chan_list(i),baseline_dpt + j) = p_list(i,j);
         end
     end
 end

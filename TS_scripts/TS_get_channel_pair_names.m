@@ -1,8 +1,7 @@
 %if single channel, convert to string
 %if cluster, use the first channel + andother
-%output a structure with name and channel
 
-function montage = TS_get_channel_pair_names(channels,is_cluster)
+function channel_names = TS_get_channel_pair_names(channels,is_cluster)
 
 channel_names = cell(1);
 
@@ -20,6 +19,4 @@ else
         channel_names{i} = ['cluster' int2str(cluster1(1)) 'withcluster' int2str(cluster2(1))];
     end        
 end
-montage.name = channel_names;
-montage.channel = channels;
 end

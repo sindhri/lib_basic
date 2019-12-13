@@ -24,13 +24,16 @@
 %subject per session and store it as a file. 
 %20160608, added output foldername
 %20170608, added vbaseline,usually [-600,-100]
-%20170918, record vbaseline in oscillation result
+%20170612, added testmode, only calculate one channel
+%20170617, modified filename for testmode
 
 
-function ITC_calculation_single_file_vbaseline(EEG,freq_limits,foldername)
+function ITC_calculation_single_file_vbaseline(EEG,freq_limits,...
+    foldername,testmode)
 
 if nargin==2
     foldername = [pwd '/result/'];
+    testmode = 'n';
 end
 
 etimes = EEG.times;
@@ -92,7 +95,6 @@ ITC_struct_base.nbchan = nbchan;
 ITC_struct_base.category_names = EEG.category_names;
 ITC_struct_base.ERSP_category = cell(nconds,1);
 ITC_struct_base.ITC_category = cell(nconds,1);
-ITC_struct_base.vbaseline= EEG.vbaseline;
 for i = 1:nconds
     ITC_struct_base.ERSP_category{i,1} = [group_name ' ERSP ' category_names{i}];
     ITC_struct_base.ITC_category{i,1} = [group_name ' ITC ' category_names{i}];
@@ -106,9 +108,21 @@ end
     id = EEG.id;
     category_names_count = EEG.category_names_count;
 
-    for j = 1:length(category_names)
-        for p = 1:nbchan
-%        for p = 1:2
+    if testmode == 'y'
+        end_category = 1;
+    else
+        end_category = length(category_names);
+    end
+
+    for j = 1:end_category
+        if testmode == 'y'
+            end_chan = 1;
+        else
+            end_chan = nbchan;
+        end
+        
+        for p = 1:end_chan
+
             fprintf('\n\nprocessing %s, category %s, channal %s\n\n\n',id,category_names{j},channames{p});
             chan_list = p;
 
@@ -136,7 +150,11 @@ end
     oscillation.ERSP = all_ERSP;
     oscillation.ITC = all_ITC_z;
    % save(['result/' id '_' EEG.session '_oscillation'], 'oscillation');
+   if strcmp(testmode,'y')==1
+    save([foldername id '_oscillation_test'], 'oscillation');
+   else
     save([foldername id '_oscillation'], 'oscillation');
+   end
 end
 
 

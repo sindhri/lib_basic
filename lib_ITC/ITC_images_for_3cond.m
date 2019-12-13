@@ -3,6 +3,7 @@
 %20140908, pulled in internal functions
 %20140909, added limit
 %20160907, added save as pdf
+%20181126, added interpret, none
 
 function ITC_images_for_3cond(IE,limit_ERSP,limit_ITC)
 
@@ -38,7 +39,7 @@ end
 function images_for_3cond_single(times, freqs, data, cond_names,limit,titlename)
 
 n_cond = size(data,3);
-tick = 100;
+tick = 200;
 xtick_min = ceil(times/tick)*tick;
 xtick_max = ceil(times(length(times))/tick)*tick;
 
@@ -67,7 +68,7 @@ adjusted_x = [0.05,0.375,0.7];
 for i = 1:n_cond
     h=subplot(1,3,i);
     imagesc(times,freqs,data(:,:,i),limit);
-    title(cond_names{i},'fontsize',fontsize);
+    title(cond_names{i},'fontsize',fontsize,'interpret','none');
     set(gca,'ydir','normal','fontsize',fontsize,'xtick',xtick_min:tick:xtick_max);
     xlabel('Time(ms)');
     if i==1

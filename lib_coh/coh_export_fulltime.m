@@ -30,8 +30,9 @@
 %the situation
 
 %update using struction on 20150526
+%20180924, export all time duration for eoec
 
-function [dataset_data,dataset_label] = TS_coh_export(COH,freq_want)
+function [dataset_data,dataset_label] = coh_export_fulltime(COH,freq_want)
 
 all_coh = COH.data;
 timesout = COH.times;
@@ -39,23 +40,7 @@ freqsout = COH.freqs;
 id_list = COH.id;
 channel_names = COH.montage_name;
 
-[filename,pathname] = uigetfile('*.txt','Choose the timing file');
-time_mean = dlmread([pathname filename]);
-
-if size(time_mean,1) ~= length(id_list)
-    message('subject number mismatch between time file and imported eeg file, aborted\n');
-    return
-end
-    
-expand = 250;
-
 [nsubject,n_channelpair,ncond] = size(all_coh);
-if size(time_mean,1) ~=nsubject || nsubject~=length(id_list)
-    fprintf('subject number mismatch, abort\n');
-    return
-end
-
-ntime = size(time_mean,2);
 
 %freq_want = [8,12];
 freq_datapoint_start=find(freqsout>freq_want(1),1);
@@ -74,10 +59,11 @@ x = timesout;
 % then time range
 %then channel pair
 
-dataset_data = zeros(total,ntime*ncond*n_channelpair);
+dataset_data = zeros(total,ncond*n_channelpair);
 dataset_label = cell(1);
-m = 1;
+name_freq = [int2str(freq_want(1)) '_' int2str(freq_want(2)) 'Hz'];
 
+m = 1;
 for j = 1:n_channelpair
     channel_pair_name = channel_names{j};
     for i = 1:nsubject
@@ -88,34 +74,22 @@ for j = 1:n_channelpair
         nogo(:,i,j) = mean(nogo_temp(freq_datapoint,:),1)';
         go(:,i,j) = mean(go_temp(freq_datapoint,:),1)';
         nogo_go(:,i,j) = mean(nogo_go_temp(freq_datapoint,:),1)';
-        
-        for p = 1:ntime%export each time point
-            time_mean_individual = time_mean(i,p);
-            time_start = time_mean_individual - expand;
-            time_end = time_mean_individual + expand;
-            time_start_datapoint = find(x>time_start,1);
-            time_end_datapoint = find(x>time_end,1)-1;
-            if isempty(time_start_datapoint) || isempty(time_end_datapoint)
-                fprintf('subject %s time %d ms not in range,return 0.\n',id_list{i},time_mean_individual);
-                dataset_data(i,m:m+2) = [0,0,0];
-            else
-                nogo_export = mean(nogo(time_start_datapoint:time_end_datapoint,i,j),1);
-                go_export = mean(go(time_start_datapoint:time_end_datapoint,i,j),1);
-                diff_export = mean(nogo_go(time_start_datapoint:time_end_datapoint,i,j),1);
-                dataset_data(i,m:m+2) = [nogo_export,go_export,diff_export];
+        nogo_export = mean(nogo(:,i,j),1);
+        go_export = mean(go(:,i,j),1);
+        diff_export = mean(nogo_go(:,i,j),1);
+        dataset_data(i,(j-1)*ncond+1:j*ncond) = [nogo_export,go_export,diff_export];
 
-            end
-            if i==1
-                dataset_label{m} = [channel_pair_name '_nogo_time' int2str(p)];
-                dataset_label{m+1} = [channel_pair_name '_go_time' int2str(p)];
-                dataset_label{m+2} = [channel_pair_name '_diff_time' int2str(p)];
-            end
+        if i==1
+                dataset_label{m} = [channel_pair_name '_' name_freq '_' COH.category_names{1}];
+                dataset_label{m+1} = [channel_pair_name '_' name_freq '_' COH.category_names{2}];
+                dataset_label{m+2} = [channel_pair_name  '_' name_freq  '_' COH.category_names{3}];
             m = m + 3;          
         end
-        m = m - 6;
     end
-    m = m + ntime*ncond;
 end
 A = dataset({dataset_data,dataset_label{:}},'ObsNames',id_list);
-export(A,'file',['export/coh_' COH.group_name '.txt']);
+if isempty(COH.group_name)
+    export(A,'file',['export_coh' name_freq '.txt']);
+else
+    export(A,'file',['export_coh_' name_freq COH.group_name '.txt']);
 end

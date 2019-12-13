@@ -16,6 +16,7 @@
 %20150608, added montage name in the ERSP/ITC category_names
 %20160907, added test run to determine time points, added freq_limits
 
+
 function ITC_struct = ITC_calculation(alleeg, chan_list,freq_limits)
 
 

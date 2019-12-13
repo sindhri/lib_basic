@@ -18,8 +18,13 @@
 %20150604, randomly pick k trials from the category that has more trials
 %than the other
 %20150608, use all available trials
+%20190401, adjust it to use in 1 condition data
+%201908, fixed an important bug about not importing single trial!
+%previously in April I was not able to import single trial
+%Now I figured out how! And previously the coherence values were larger
+%than 1! Now everything seems normal!
 
-function COH = TS_coh_calculation(alleeg,montage,baseline)
+function COH = coh_calculation_1cond(alleeg,montage,baseline,coh_interest)
 
 %channel_clusters = {{[36,37],[25,27]},{[36,37],[105,104]},{[11,16],[36,37]},{[11,16],[105,104]}};
 channel_clusters = montage.channel;
@@ -32,12 +37,13 @@ sampling_rate = alleeg(1).srate;
 time_min = 0-baseline;
 time_max = n_frames/sampling_rate*1000-4-baseline;
 
-all_coh = cell(nsubject,npair,3);
+all_coh = cell(nsubject,npair,1);
 id_list = cell(nsubject,1);
-trial_list = zeros(nsubject,3);
+trial_list = zeros(nsubject,1);
 
 COH.group_name = alleeg(1).group_name;
 COH.category_names = alleeg(1).category_names;
+
 if length(COH.category_names)==2
     COH.category_names{3}=['diff_' alleeg(1).category_names{1} '-' alleeg(1).category_names{2}];
 end
@@ -56,64 +62,45 @@ for i = 1:nsubject
     data = EEG.data; %chan x datapoint x trials
     category_names_count = EEG.category_names_count;
     n_category = size(category_names_count,1);
-    nogo_trial_number = [];
-    go_trial_number = [];
+    trial_of_condition_of_interest = [];
     
     %find the trials for each condition
     for p = 1:n_category
-        if strcmp(category_names_count{p,1},'nogo_correct')==1
-            nogo_trial_number = category_names_count{p,3};
-            continue;
-        end
-        if strcmp(category_names_count{p,1},'go_correct')==1
-            go_trial_number = category_names_count{p,3};
+        if strcmp(category_names_count{p,1},alleeg(1).category_names{1})==1
+            trial_of_condition_of_interest = category_names_count{p,3};
             continue;
         end
     end
-    if isempty(nogo_trial_number) || isempty(go_trial_number)
-        fprintf('nogo or go with 0 trials\n');
+    if isempty(trial_of_condition_of_interest) 
+        fprintf('condition 1 has 0 trials\n');
         return
     end
     
-    %pick the minimum number of trials
-    nogol = length(nogo_trial_number);
-    gol = length(go_trial_number);
-    
-    if nogol <= gol
-        minl = nogol;
-        if nogol < gol
-%            go_trial_number(nogol+1:gol) = []; %choosing the first k trials
-%            go_trial_number = go_trial_number([randperm(gol,nogol)]);%random choose k trials
-        end
-    else 
-        minl = gol;
-%        nogo_trial_number(gol+1:nogol) = [];%choose the first k trials
-%         nogo_trial_number = nogo_trial_number([randperm(nogol,gol)]);
-    end
     
     id_list{i} = EEG.id;
-    trial_list(i,:) = [nogol,gol,minl];
-    
+    trial_list(i,:) = length(trial_of_condition_of_interest);
+
     for j = 1:npair
         clusters = channel_clusters{j};
         cluster1 = clusters{1};
         cluster2 = clusters{2};
-        data_cluster1 = mean(data(cluster1,:,:),1); %1 x dataopint x trial
-        data_cluster2 = mean(data(cluster2,:,:),1); %1 x datapoint x trial
+        data_cluster1 = squeeze(mean(data(cluster1,:,:),1)); %dataopint x trial
+        data_cluster2 = squeeze(mean(data(cluster2,:,:),1)); %datapoint x trial
+
+        data_cluster1_DOI = data_cluster1(:,trial_of_condition_of_interest); %datapoint x specif_trial
+        data_cluster2_DOI = data_cluster2(:,trial_of_condition_of_interest);
         
-        data_cluster1_nogo = data_cluster1(:,:,nogo_trial_number);
-        data_cluster1_go = data_cluster1(:,:,go_trial_number);
-        data_cluster2_nogo = data_cluster2(:,:,nogo_trial_number);
-        data_cluster2_go = data_cluster2(:,:,go_trial_number);
-        
+        data_cluster1_reshaped = reshape(data_cluster1_DOI,[1,n_frames*length(trial_of_condition_of_interest)]);
+        data_cluster2_reshaped = reshape(data_cluster2_DOI,[1,n_frames*length(trial_of_condition_of_interest)]);
+       
       [coh,~,timesout,freqsout,~,~,...
-        ~,~,~] = newcrossf({data_cluster1_nogo,data_cluster1_go},...
-        {data_cluster2_nogo, data_cluster2_go},...
+        ~,~,~] = newcrossf(data_cluster1_reshaped,data_cluster2_reshaped,...
         n_frames,[time_min, time_max],...
         sampling_rate,0,'plotamp','off','plotphase','off',...
-        'timesout', 200, 'freqs',[0.1,30],'type','coher');
+        'timesout', 200, 'freqs',coh_interest,'type','coher');
 
-        all_coh(i,j,:) = coh;
+   
+        all_coh(i,j,:) = {coh};
         
     end
 end

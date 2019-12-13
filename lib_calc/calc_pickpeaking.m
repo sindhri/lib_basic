@@ -1,5 +1,6 @@
 %20170117
 %input eeg.data format, chan x datapoint x condition x subject
+%also need to have the filed times.
 %output, subject x condition x poi
 
 %of a giving peak, first search -50 to 50ms
@@ -15,15 +16,28 @@
 %poi(1).direction = -1; %negative
 
 %20171129, revise, add output structure to easy access the numbers
+%20190227, added options for single condition data
 
-function [output,output_struct] = calc_pickpeaking(alleeg,poi)
+function [output,output_struct] = calc_pickpeaking(alleeg,poi,ncond)
 
-data = alleeg.data;
-ncond = size(data,3);
-nsubject = size(data,4);
-times = alleeg.times;
-npoi = length(poi);
-output = zeros(nsubject,ncond,npoi*2);
+if nargin==2
+    ncond>1;
+end
+
+if ncond>1
+    data = alleeg.data;
+    ncond = size(data,3);
+    nsubject = size(data,4);
+    times = alleeg.times;
+    npoi = length(poi);
+    output = zeros(nsubject,ncond,npoi*2);
+else
+    data = alleeg.data;
+    nsubject = size(data,3);
+    times = alleeg.times;
+    npoi = length(poi);
+    output = zeros(nsubject,ncond,npoi*2);
+end
 
 if isfield(alleeg,'ID')
     subject_list = alleeg.ID;

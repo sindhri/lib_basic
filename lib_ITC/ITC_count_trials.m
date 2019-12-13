@@ -17,6 +17,9 @@
 %20160901, added TS case, use up to second . as the id. id_type=3;
 %unless it is healthy control. which doesn't have the second .
 %20170612, added pathname
+%20180413, use the shared find_id,
+%20180602, switched the order of feeding in ITC_find_id
+
 
 function ITC_count_trials(category_names,id_type,pathname)
     
@@ -36,13 +39,7 @@ end
         temp = file_list(i).name;
         if strcmp(temp(1),'.')~=1 && strcmp(temp(length(temp)-3:length(temp)),'.raw')
             filename = temp;
-            if id_type==1
-                id = find_id(filename);
-            elseif id_type==2
-                id = find_id2(filename);
-            else
-                 id = find_id3(filename);
-            end
+            id = ITC_find_id(id_type,filename);
             id_list{m} = id;
             fprintf('%s\n',id);
             EEG = pop_readegi([pathname filename]);
@@ -53,43 +50,6 @@ end
     end
     export_trial_count(pathname,trial_count,category_names,id_list);
     msgbox('trial count saved in ''trial_count.txt''.');
-end
-
-%find the first number in the filename and use it as the id
-function id = find_id(filename)
-    first = [];
-    last = [];
-    for i = 1:length(filename)
-        if ~isempty(str2num(filename(i))) && isempty(first)
-            first = i;
-            break
-        end
-    end
-    for i = first+1:length(filename)
-        if isempty(str2num(filename(i))) && isempty(last)
-            last = i-1;
-            break
-        end
-    end
-    id = filename(first:last);
-end
-
-function id=find_id2(filename)
-    dots = find(filename=='.');
-    id = filename(1:dots(1)-1);
-end
-
-function id = find_id3(filename)
-    dots = find(filename=='.');
-    if filename(3) ~= 'H'
-        id = find_id(filename(1:dots(1)));
-        session = filename(dots(1)+1:dots(2)-1);       
-    else
-        id = find_id(filename);
-        id = ['H' id];
-        session = '1';
-    end
-    id = [id '_' session];
 end
 
 

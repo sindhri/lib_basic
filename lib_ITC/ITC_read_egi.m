@@ -27,7 +27,8 @@
 %reading ave data, because for blc we actually send the real index into
 %calculation
 %added input type = 'ave' for ave file
-%20180214, fixed a bug when input is not an ave
+%20180502, used external function ITC_find_id, removed exporting trial
+%number for ave files becase it's all 1
 function alleeg = ITC_read_egi(category_names,baseline,group_name,id_type,...
     net_type,pathname,type)
 
@@ -51,13 +52,7 @@ function alleeg = ITC_read_egi(category_names,baseline,group_name,id_type,...
         temp = file_list(i).name;
         if strcmp(temp(1),'.')~=1 && strcmp(temp(length(temp)-3:length(temp)),'.raw')
             filename = temp;
-            if id_type==1
-                id = find_id(filename);
-            elseif id_type==2
-                id = find_id2(filename);
-            else
-                id = find_id3(filename);
-            end
+            id = ITC_find_id(id_type,filename);
             id_list{m} = id;
             fprintf('%s\n',id);
 
@@ -79,45 +74,10 @@ function alleeg = ITC_read_egi(category_names,baseline,group_name,id_type,...
             trial_count = [trial_count;simple_count];
         end
     end
-    export_trial_count(pathname,trial_count,category_names,id_list);
-    msgbox('trial count saved in ''trial_count.txt''.');
-end
-
-%find the first number in the filename and use it as the id
-function id = find_id(filename)
-    first = [];
-    last = [];
-    for i = 1:length(filename)
-        if ~isempty(str2num(filename(i))) && isempty(first)
-            first = i;
-            break
-        end
+    if strcmp(type,'ave')~=1
+        export_trial_count(pathname,trial_count,category_names,id_list);
+        msgbox('trial count saved in ''trial_count.txt''.');
     end
-    for i = first+1:length(filename)
-        if isempty(str2num(filename(i))) && isempty(last)
-            last = i-1;
-            break
-        end
-    end
-    id = filename(first:last);
-end
-
-function id =find_id2(filename)
-    dots = find(filename=='.');
-    id = filename(1:dots(1)-1);
-end
-
-function id = find_id3(filename)
-    dots = find(filename=='.');
-    if filename(3) ~= 'H'
-        id = find_id(filename(1:dots(1)));
-        session = filename(dots(1)+1:dots(2)-1);       
-    else
-        id = find_id(filename);
-        id = ['H' id];
-        session = '1';
-    end
-    id = [id '_' session];
 end
 
 %EEG after using read_egi
