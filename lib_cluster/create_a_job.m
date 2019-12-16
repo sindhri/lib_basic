@@ -19,7 +19,7 @@ fprintf(fid,'module load MATLAB/2019b\n');
 %content = 'matlab -nodisplay -nojvm -nosplash -nodesktop -r ';
 content = 'matlab -nodisplay -nosplash -nodesktop -r ';
 content = [content '"addpath(''/ysm-gpfs/home/jw646/project/MADE_pipeline/'];
-content = [content project_name '/'');run_MADE_' project_name];
+content = [content project_name '/'');run_' project_name];
 content = [content '(''' datafilename ''');exit;"\n'];
 fprintf(fid,content);
 fclose(fid);
