@@ -1,3 +1,5 @@
+%20200318, if ID can't be integer, use string
+%20200316, ID is nx1
 %20170920, read the folder of ave files.
 %20171128, downsample option to 250hz 
 %20180502, adjusted EEG.times to be downsampled as well
@@ -44,13 +46,21 @@ for i = 1:length(ALLEEG)
         end
     end
     data(:,:,:,i) = data_temp;
-    %ID{i} = ALLEEG(i).id; 
+    %switch back to string 20200318
+    %see how many other things that need to be fixed
+    ID_str{i,1} = ALLEEG(i).id; 
     %20191111
-    ID(i) = str2double(ALLEEG(i).id);
+    ID_int(i,1) = str2double(ALLEEG(i).id);
 end
 
 EEG_ave.data = data;
-EEG_ave.ID = ID;
+if sum(isnan(ID_int))>0
+    EEG_ave.ID = ID_str;
+    EEG_ave.ID_dtype = 'str';
+else
+    EEG_ave.ID = ID_int;
+    EEG_ave.ID_dtype = 'int';
+end
 EEG_ave.chanlocs = ALLEEG(1).chanlocs;
 EEG_ave.eventtypes = ALLEEG(1).category_names;
 EEG_ave.nbchan = ALLEEG(1).nbchan;

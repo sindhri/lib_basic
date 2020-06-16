@@ -1,3 +1,4 @@
+%I don't think this function was written!
 %20191018, convert EGI raw file to eph
 %text file with header
 %col=nchan, row=ndatapoint, srate

@@ -1,3 +1,6 @@
+%20200421, changed isNAN to isnan
+%20200420, added group_name in the code, if oscillation.group_name is empty
+%and group_name is not empty
 %20160211, renamed foi_type to oscillation_type
 %20170619, grab only the foi from each file, such as [4,8];
 %instead of loading the whole dataset
@@ -45,6 +48,7 @@ for i = 1:length(file_list)
             foi_struct.name_for_plot = name_for_plot;
             foi_struct.name_for_column = name_for_column;
             foi_struct.category_names = oscillation.category_names;
+
         end
         
         foi_data_ERSP = get_one_freq(oscillation,foi,'ERSP');
@@ -64,7 +68,12 @@ end
 foi_struct.ERSP = foi_data_all_ERSP;
 foi_struct.ITC = foi_data_all_ITC;
 
-foi_struct.group_name = oscillation.group_name;
+if isempty(group_name)
+   foi_struct.group_name = oscillation.group_name;
+else
+    foi_struct.group_name = group_name;
+end
+
 foi_struct.freqs = foi;
 foi_struct.times = oscillation.times;
 foi_struct.ntimes = oscillation.ntimes;
@@ -84,7 +93,7 @@ function [id,session] = parse_filename(filename)
     else
         session= filename(underscore(1)+1:underscore(2)-1);
         session = str2double(session);
-        if isNAN(session)
+        if isnan(session)
             session = 1;
         end
     end

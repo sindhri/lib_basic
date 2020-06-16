@@ -1,3 +1,6 @@
+%20200207, used condition_selected in the first step
+%20200203, added more colors, rearranged for nplot=8, added title
+%20200203, used doi, can do amplitude if it's a peak
 %only correlational results
 %20190306, input EEGAVE, place of interest, and condition selected
 %do paird sampled t tests of selected conditions at place of interest
@@ -12,24 +15,32 @@
 %20191017, data chan x time x ncon x subj
 
 function output_table = FH_story2_2(EEGAVE,poi,cond_selected,behavioral,measure_name)
- 
-    time_index = find_valid_pos(poi.time,EEGAVE.times);
-    data = EEGAVE.data(poi.cluster,time_index(1):time_index(2),cond_selected,:);
-    data_ttest = mean(mean(data,1),2);
-    data_ttest = squeeze(data_ttest);
-    data_ttest = data_ttest';
+
+EEGAVE = FH_select_condition(EEGAVE,cond_selected);
+ncond = length(EEGAVE.eventtypes);
+    doi = calc_doi_simple(EEGAVE,poi);    
     
     res = get(0,'screensize');
     f = figure;
     set(f,'position',[0,0,res(3),res(4)*0.75]);
     
-    color_lib = {'b','r','g','k','m','c'};
+    color_lib = {'b','r','g','k','m','c','y','b'};
 
-    nplot = length(cond_selected);
+    nplot = ncond;
     output_data = [];
     for i= 1:nplot
-        subplot(1,nplot,i);
-        x = data_ttest(:,i);
+        if nplot~=8
+            subplot(1,nplot,i);
+        else
+            nrow = 2;
+            ncol = 4;
+            subplot(nrow,ncol,i);
+        end
+        if isfield(doi,'data_avg')
+            x = doi.data_avg(:,i+1);
+        else
+            x = doi.data_amplitude(:,i+1);
+        end
         cbehavioral = behavioral.(measure_name);
         
         [common_id,data_id_newindex,cbehavioral] = select_IDs(EEGAVE.ID,behavioral.ID,cbehavioral);
@@ -47,43 +58,19 @@ function output_table = FH_story2_2(EEGAVE,poi,cond_selected,behavioral,measure_
         ylabel(measure_name,'fontweight','bold','interpreter','none');
         %yticks([50,100,150,200])
         %yticklabels({'50','100','150','200'});
-        xlabel(EEGAVE.eventtypes{cond_selected(i)},'fontweight','bold');
+        xlabel(EEGAVE.eventtypes{i},'fontweight','bold','interpreter','none');
+        title(poi.name,'interpreter','none');
         hold off
     end
     vnames = cell(1);
     vnames{1} = 'ID';
-    for i = 2:length(cond_selected)+1
-        vnames{i} = [EEGAVE.eventtypes{cond_selected(i-1)} '_' poi.name '_' int2str(poi.time(1)) '_to_' int2str(poi.time(2)) 'ms'];
+    for i = 2:ncond+1
+        vnames{i} = [EEGAVE.eventtypes{i-1} '_' poi.name '_' int2str(poi.time(1)) '_to_' int2str(poi.time(2)) 'ms_' poi.stats_type];
     end
     output_table = array2table(output_data,'VariableNames',vnames);
 
 end
 
-function [items_pos, items_adjusted] = find_valid_pos(items,list)
-    n = length(list);
-    items_pos = round( (items-list(1))/(list(n)-list(1)) * (n-1))+1;
-    items_pos(find(items_pos<1))=1;
-    items_pos(find(items_pos>n))=n;
-    items_adjusted = list(items_pos);
-    
-    for i = 1:size(items,1)
-        for j = 1:size(items,2)
-            if items(i,j)~=items_adjusted(i,j)
-                fprintf('time %d adjusted to %d\n', items(i,j),items_adjusted(i,j));
-            end
-        end
-    end
-end
-
-
-function print_t_result(h,p,stats)
-    if h==0
-        fprintf('not significant.\n');
-    else
-        fprintf('significant.\n');
-    end
-    fprintf('t(%d)=%.3f, p=%.3f\n',stats.df,stats.tstat,p);
-end
 
 function [common_id,data_id_newindex,behavioral_new] = select_IDs(data_id,behavioral_id,behavioral)
     fprintf('input data n = %d, behavioral n = %d\n',length(data_id),length(behavioral_id));

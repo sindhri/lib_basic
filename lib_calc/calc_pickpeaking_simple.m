@@ -1,3 +1,4 @@
+%20200203, use cond_selected to limit the output
 %20170117
 %input eeg.data format, chan x datapoint x condition x subject
 %also need to have the filed times.
@@ -15,23 +16,29 @@
 %output is the peak amplitude at the poi: ncond x nsubj
 %also output the peak latency within the poi: ncond x nsubj
 
+%20200117, added options to use 'pospeak' and 'negpeak' instead of +,-
 
-function [peak_amplitude,peak_latency] = calc_pickpeaking_simple(data,times,poi,polarity)
+function [peak_amplitude,peak_latency] = calc_pickpeaking_simple(data,times,...
+    poi,polarity,cond_selected)
 
 [~,~,ncond,nsubject] = size(data);
+if nargin==4
+    cond_selected = 1:ncond;
+end
+ncond = length(cond_selected);
 
 toi = poi.time;
 choi = poi.cluster;
 [toi_index,~] = adjust_toi(toi,times);
 
-data_avgchantoi = mean(data(choi,toi_index(1):toi_index(2),:,:),1);
+data_avgchantoi = mean(data(choi,toi_index(1):toi_index(2),cond_selected,:),1);
 peak_amplitude = zeros(ncond,nsubject);
 peak_latency = zeros(ncond,nsubject);
 
 for i = 1:ncond
     for j = 1:nsubject
         input_data = data_avgchantoi(1,:,i,j);
-        if polarity == '+'
+        if strcmp(polarity,'+')==1 || strcmp(polarity, 'pospeak')==1
             [peaks,peak_latencyindexes] = findpeaks(input_data);
             if ~isempty(peaks)
                 [maxpeak,maxpeakindex] = max(peaks);
@@ -41,7 +48,7 @@ for i = 1:ncond
                 [peak_amplitude(i,j),peak_latency(i,j)] = max(input_data);
                 fprintf('cond%d,subj%d no peak found, used maximum value\n',i,j);
             end
-        elseif polarity == '-'
+        elseif strcmp(polarity,'-')==1 || strcmp(polarity, 'negpeak')==1
                 [peaks,peak_latencyindexes] = findpeaks(-input_data);
                 if ~isempty(peaks)
                     [maxpeak,maxpeakindex] = max(peaks);

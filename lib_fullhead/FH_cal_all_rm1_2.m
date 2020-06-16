@@ -1,3 +1,7 @@
+%20200208, select condition so it doesn't take too long
+%added group_match being table situation
+%20200208, added catch in case the last step didn't convert
+%20200208, moved get_rm to be its own function FH_get_rm
 %EEGAVE, difference between every condition contrast
 %20190402, added nsubj in the grid
 %20191017, data structures change to nchan xdatapoint x ncond x nsubj
@@ -5,7 +9,18 @@
 %pretreat between_var to match the sequence in EEGAVE
 %between_var can be a nx1 cell, eg, ['exposed';'exposed';...'control';'control']
 %or it can just be an array of numbers
-function rmintable = FH_cal_all_rm1_2(EEGAVE,group_match)
+function [rmintable,rminstruct,Me] = FH_cal_all_rm1_2(EEGAVE,group_match,cond_selected)
+if nargin==3
+    EEGAVE = FH_select_condition(EEGAVE,cond_selected);
+end
+
+if istable(group_match)
+    vname = group_match.Properties.VariableNames{2};   
+    group_new.ID = group_match.ID;
+    group_new.group = group_match.(vname);
+    group_match = group_new;
+end
+
 eventtypes = EEGAVE.eventtypes;
 [~,~,ncond,~] = size(EEGAVE.data);
 subjects = EEGAVE.ID;
@@ -31,7 +46,7 @@ rm_grid = {};
                 fprintf('processing......\n');
                 condname1 = eventtypes{i};
                 condname2 = eventtypes{j};
-                [within,between] = get_rm(data1,...
+                [within,between] = FH_get_rm(data1,...
                     data2,group_match.group);
                 cgrid.within = within;
                 cgrid.between = between;
@@ -51,38 +66,8 @@ rm_grid = {};
     end
     rowHeadings={'eventtype',eventtypes{:}};
     rminstruct = cell2struct(rm_grid,rowHeadings,2);
-    rmintable = struct2table(rminstruct);
-end
-
-function [within,between] = get_rm(data1,data2,between_var)
-    
-    [nchan,ndpt,~] = size(data1);
-
-    for m = 1:nchan
-        fprintf('\nchan %d dpt ',m);
-        for n = 1:ndpt
-            if mod(n,ndpt/10)==0
-                fprintf('%d ',n);
-            end
-            cdata1 = squeeze(data1(m,n,:));
-            cdata2 = squeeze(data2(m,n,:));
-            t = table(between_var,cdata1,cdata2,...
-            'VariableNames',{'group','meas1','meas2'});
-            Meas = table([1 2]','VariableNames',{'Measurements'});
-            rm2 = fitrm(t,'meas1-meas2~group','WithinDesign',Meas);
-            [ranovatbl] = ranova(rm2);
-                 anovatbl = anova(rm2);
-                 %validated with SPSS 26, the effect for the within factor
-                 %is slightly different, rest of the factors have the exact
-                 %number
-
-            within.F(m,n) = ranovatbl.F(2);
-            within.p(m,n)= ranovatbl.pValueGG(2);
-            within.df{m,n} = ranovatbl.DF(2:3);
-            between.F(m,n) = anovatbl.F(2);
-            between.p(m,n) = anovatbl.pValue(2);
-            between.df{m,n} = anovatbl.DF(2:3);
-            
-        end
+    try
+        rmintable = struct2table(rminstruct);
+    catch Me
     end
 end

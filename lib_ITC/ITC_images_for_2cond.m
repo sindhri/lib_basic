@@ -1,3 +1,4 @@
+%20200318, use the old color scheme
 %IE is from ITC_calculation_struct
 %name_group_info is used to identify groups, eg, exposed, control
 %%20140908, pulled in internal functions
@@ -32,7 +33,7 @@ end
 titlename=['ITC_' IE.group_name '_' IE.montage_name];
 images_for_2cond_single(times,freqs,data,IE.ITC_category,limit_ITC,...
     diff_limit_ITC,titlename);
-    
+
 end
 
 
@@ -54,7 +55,7 @@ end
 function images_for_2cond_single(times, freqs, data, cond_names,limit,...
     diff_limit,titlename)
 
-fontsize = 15;
+fontsize = 20;
 
 diff = data(:,:,1)-data(:,:,2);
 
@@ -75,42 +76,31 @@ if ~exist('plot_oscillation','dir')
 end
 figure;
 
-
+load colormap_red_blue;
+colormap(red_blue);
 %plot condition 1
-h1=subplot(1,3,1);
-imagesc(times,freqs,data(:,:,1),limit);
-t=title(cond_names{1},'fontsize',fontsize);
-set(t,'Interpreter','none');
-set(gca,'ydir','normal','fontsize',fontsize,'xtick',xtick);
-xlabel('Time(ms)');
-ylabel('Frequency(Hz)');
-colorbar;
-enlarge_plot(h1,-0.09);
+x_offset = [-0.09, -0.08, -0.04];
+for i = 1:3
+    pause(1)
+    h1=subplot(1,3,i);
+    if i<3
+        imagesc(times,freqs,data(:,:,i),limit);
+        t=title(cond_names{i},'fontsize',fontsize);
+    else
+        imagesc(times,freqs,diff,diff_limit);
+        t=title([cond_names{1} '-' cond_names{2}],'fontsize',fontsize);
+    end
+    set(t,'Interpreter','none');
+    set(gca,'ydir','normal','fontsize',fontsize,'xtick',xtick);
+    xlabel('Time(ms)');
+    ylabel('Frequency(Hz)');
+    colorbar;
+    pause(1)
+    enlarge_plot(h1,x_offset(i));
+end
 
-%plot condition 2
-h2=subplot(1,3,2);
-imagesc(times,freqs,data(:,:,2),limit);
-t=title(cond_names{2},'fontsize',fontsize);
-set(t,'Interpreter','none');
-set(gca,'ydir','normal','fontsize',fontsize,'xtick',xtick);
-xlabel('Time(ms)');
-ylabel('Frequency(Hz)');
-colorbar;
-enlarge_plot(h2,-0.04);
-
-%plot difference
-h3=subplot(1,3,3);
-imagesc(times,freqs,diff,diff_limit);
-t=title([cond_names{1} '-' cond_names{2}],'fontsize',fontsize);
-set(t,'Interpreter','none');
-set(gca,'ydir','normal','fontsize',fontsize,'xtick',xtick);
-xlabel('Time(ms)');
-ylabel('Frequency(Hz)');
-colorbar;
-enlarge_plot(h3,0);
-
-set(gcf, 'PaperPosition', [0 0 18 10]); %Position plot at left hand corner with width 5 and height 5.
-set(gcf, 'PaperSize', [18 10]); 
+set(gcf, 'PaperPosition', [0 0 20 10]); %Position plot at left hand corner with width 5 and height 5.
+set(gcf, 'PaperSize', [20 10]); 
 saveas(gcf,['plot_oscillation/' titlename],'pdf');
 close;
 end
@@ -119,6 +109,6 @@ function enlarge_plot(h,xchange)
 size = get(h,'position');
 size2 = size;
 size2(1) = size(1) + xchange;
-size2(3) = size(3) * 2;
+size2(3) = 0.20 ;
 set(h,'position',size2);
 end

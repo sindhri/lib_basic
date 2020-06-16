@@ -1,3 +1,5 @@
+%20200207, added selected_condition for both data and behavioral
+%both numbers/index
 %20190301
 %input EEGAVE.data chan x time x subj x cond
 %input behavorial table, subj x dimension
@@ -7,7 +9,12 @@
 
 %20191017, data dimension is revised to nchan x ndatapoint x ncond x nsubj
 %originally it was nchan x ndatapoint x nsubj x ncond
-function corrintable = FH_cal_all_cor_2(EEGAVE,behavioral)
+function corrintable = FH_cal_all_cor_2(EEGAVE,behavioral,cond_selected,...
+    behavioral_selected)
+
+EEGAVE = FH_select_condition(EEGAVE,cond_selected);
+behavioral = behavioral(:,[1,behavioral_selected]);
+
     data = EEGAVE.data;
     eventtypes = EEGAVE.eventtypes;
     ncond = size(data,3);

@@ -1,3 +1,5 @@
+%20200227, added optional input id_type
+%set id_type==2 can use all the digit till the first dot as the subject id
 %20191008, removed the need of inputting category names, only for id_type =
 %1
 
@@ -23,8 +25,10 @@
 %20180602, switched the order of feeding in ITC_find_id
 
 
-function count_trials
-    id_type = 1;
+function count_trials(id_type)
+    if nargin==0
+        id_type = 1;
+    end
     
     pathname = uigetdir(pwd,'select raw file folder');
     pathname = [pathname '/'];

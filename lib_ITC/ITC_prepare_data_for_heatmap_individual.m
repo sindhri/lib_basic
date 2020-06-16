@@ -1,3 +1,5 @@
+%20200327, added id
+
 %20141202, get the mean of one frequency from the IE for later full head plotting
 %output dimension: IE.foi.data = times x ncond x nsubj x nchan
 %trick the topoplot with ALLEEG structure, even though it is not EEG.

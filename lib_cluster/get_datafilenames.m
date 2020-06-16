@@ -3,5 +3,5 @@ function datafilenames = get_datafilenames
     datafilenames = dir(pathname);
     datafilenames = datafilenames(~ismember({datafilenames.name},{'.','..','.DS_Store'}));
     datafilenames = {datafilenames.name};
-    
+    save datafilenames datafilenames;
 end

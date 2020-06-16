@@ -1,3 +1,12 @@
+%20200318, use updated doi which has ID has it's own field
+%not with amplitude/latency
+
+%2020031, fixed bug on peakpicking vname generation
+%20200204, moved the data_plot calculation out, removed
+%'time_range_to_plot', changed function structure completely
+%20200203, only export condition_selected, plotting line and dash
+%20200113, output both latency and amplitude
+%20200107, fixed a bug of not using all the conditions
 %20191211, added calculating peaks
 %added stats_type to poi:
 %'+' means positive peak
@@ -6,23 +15,31 @@
 %output doi, which is a copy of poi plus the data for output
 
 %for comparing condition difference.
-%20190306, input EEGAVE, place of interest, and condition selected
+%20190306, input EEG_ave, place of interest, and condition selected
 %do paird sampled t tests of selected conditions at place of interest
 %and make plots of the whole region
 %poi.name, cluster, time
-%EEGAVE data, chan x time x subj x cond
+%EEG_ave data, chan x time x subj x cond
 %20190402, added time_range_to_plot
 %20191017, change data to chan x time x ncond x subj
 %20191115, fixed underscore for legend
-function doi = FH_story1_2(EEGAVE,poi,cond_selected,time_range_to_plot)
-if nargin==3
-   time_range_to_plot = [EEGAVE.times(1),EEGAVE.times(end)];
-end
-%   time_index = find_valid_pos(poi.time,EEGAVE.times);
-    time_range_to_plot_index = find_valid_pos(time_range_to_plot,EEGAVE.times);
+%20200108, added exporting data_plot
 
-%    data = EEGAVE.data(poi.cluster,time_index(1):time_index(2),cond_selected,:);
-fprintf('\n\nSummary:\npoi name: %s\n',poi.name);
+%20200120, added group_name to the plot
+%20200120, removed exporting individual
+%amplitude and latency table, but only export the jointed table
+
+function [doi,output_table,data_plot,...
+    data_plot_table] = FH_story1_2(EEG_ave,poi,cond_selected)
+
+EEG_ave = FH_select_condition(EEG_ave,cond_selected);
+
+if isempty(EEG_ave.group_name)
+    fprintf('\n\nSummary:\npoi name: %s\n',poi.name);
+else
+    fprintf('\n\nSummary:\ngroup name: %s\npoi name: %s\n',...
+        EEG_ave.group_name,poi.name);
+end
 fprintf('poi channel: ');
 for i = 1:length(poi.cluster)
     fprintf('%d ',poi.cluster(i));
@@ -30,109 +47,128 @@ end
 fprintf('\npoi time: %d to %d ms\n',poi.time(1),poi.time(2));
 fprintf('poi stats type: %s\n',poi.stats_type);
 
-    if strcmp(poi.stats_type,'avg')==1
-        data_ttest = calc_avgtimechan_simple(EEGAVE.data,EEGAVE.times,poi)';
-        doi.data_avg = [EEGAVE.ID,data_ttest];
-        %ttest
-        for i = 1:length(cond_selected)-1
-            for j = i+1:length(cond_selected)
-                [h,p,~,stats] = ttest(data_ttest(:,i),data_ttest(:,j));
-                fprintf('%s vs. %s', EEGAVE.eventtypes{cond_selected(i)},EEGAVE.eventtypes{cond_selected(j)});
-                print_t_result(h,p,stats);
-            end
-        end
-    
-    else
-        [peak_amplitude,peak_latency] = calc_pickpeaking_simple(EEGAVE.data,...
-            EEGAVE.times,poi,poi.stats_type);
-        for i = 1:length(cond_selected)-1
-            for j = i+1:length(cond_selected)
-                [h,p,~,stats] = ttest(peak_amplitude(i,:),peak_amplitude(j,:));
-                fprintf('amplitude: %s vs. %s', EEGAVE.eventtypes{cond_selected(i)},EEGAVE.eventtypes{cond_selected(j)});
-                print_t_result(h,p,stats);
-                [h,p,~,stats] = ttest(peak_latency(i,:),peak_latency(j,:));
-                fprintf('latency: %s vs. %s', EEGAVE.eventtypes{cond_selected(i)},EEGAVE.eventtypes{cond_selected(j)});
-                print_t_result(h,p,stats);
-            end
-        end
-        doi.data_amplitude = [EEGAVE.ID,peak_amplitude'];
-        doi.data_latency = [EEGAVE.ID,peak_latency'];
-    end
-    
-    %t tests
-    %plot
-    data_plot = EEGAVE.data(poi.cluster,time_range_to_plot_index(1):time_range_to_plot_index(2),cond_selected,:);
-    data_plot = squeeze(mean(mean(data_plot,1),4));
-    figure;
-    color_lib = {'b','r','g','k','m','c'};
-    for i = 1:length(cond_selected)
-        plot(EEGAVE.times(time_range_to_plot_index(1):time_range_to_plot_index(2)),data_plot(:,i),color_lib{i});
-        xlabel('Time (ms)');
-        hold on;
-    end
-    yl = ylim;
-    plot([poi.time(1),poi.time(1)],[yl(1),yl(2)],'-.k');
-    plot([poi.time(2),poi.time(2)],[yl(1),yl(2)],'-.k');
-    legend(EEGAVE.eventtypes{cond_selected},'interpreter','none');
-    title(poi.name,'interpreter','none');
-    
+%t tests
+doi = calc_doi_simple(EEG_ave,poi);    
+
+%plot
+data_plot = calc_data_plot(EEG_ave,poi);
+
+if isempty(EEG_ave.group_name)
+   title_text = poi.name;
+else
+   title_text = [EEG_ave.group_name '_' poi.name];
+end
+
+legend_text = EEG_ave.eventtypes;
+
+plot_1ERP_poi_ave(data_plot,EEG_ave.times,title_text,legend_text,...
+    poi.time);
+
+output_table = export_output_table(poi,doi,EEG_ave);
+data_plot_table=export_data_plot(EEG_ave,poi,data_plot);
+end
+
+
+function output_table = export_output_table(poi,doi,EEG_ave)
     %compose output table(s)
     vnames = cell(1);
     vnames{1} = 'ID';
     if ~exist('export','dir')
         mkdir('export');
     end
+    
+    ncond = length(EEG_ave.eventtypes);
+    %export individual stats values
     if strcmp(poi.stats_type,'avg')==1
-        for i = 2:length(cond_selected)+1
-            vnames{i} = [EEGAVE.eventtypes{cond_selected(i-1)} '_'];
+        for i = 2:(ncond+1)
+            vnames{i} = [EEG_ave.eventtypes{i-1} '_'];
             vnames{i} = [vnames{i} poi.name '_' int2str(poi.time(1))];
             vnames{i} = [vnames{i} '_to_' int2str(poi.time(2)) 'ms_' poi.stats_type];
         end
-        output_table = array2table(doi.data_avg,'VariableNames',vnames);
-        writetable(output_table,['export/export_' poi.name '_avg.csv']);
+           ID = doi.ID;
+        for i = 1:ncond
+            temp = doi.data_avg(:,i);
+            eval([vnames{i+1} '= temp;']); %super strange!!
+        end
+        temp_str = 'output_table = table(ID';
+        for i = 1:ncond
+            temp_str = strcat(temp_str,[',eval(vnames{' int2str(i+1) '})']);
+        end
+        temp_str = [temp_str ');'];
+        eval(temp_str);
+        output_table.Properties.VariableNames = vnames;
+        if isempty(EEG_ave.group_name)
+            writetable(output_table,['export/export_' poi.name '_avg.csv']);
+        else
+            writetable(output_table,['export/export_' EEG_ave.group_name '_' poi.name '_avg.csv']);
+        end
     else
-        for i = 2:length(cond_selected)+1
-            vnames{i} = [EEGAVE.eventtypes{cond_selected(i-1)} '_'];
+        for i = 2:(ncond+1)
+            vnames{i} = [EEG_ave.eventtypes{i-1} '_'];
             vnames{i} = [vnames{i} poi.name '_' int2str(poi.time(1))];
             vnames{i} = [vnames{i} '_to_' int2str(poi.time(2)) 'ms_' poi.stats_type];
             vnames{i} = [vnames{i} '_amplitude'];
         end
-        output_table = array2table(doi.data_amplitude,'VariableNames',vnames);
-        writetable(output_table,['export/export_' poi.name '_amplitude.csv']);
-        for i = 2:length(cond_selected)+1
-            vnames{i} = [EEGAVE.eventtypes{cond_selected(i-1)} '_'];
+        ID = doi.ID;
+        for i = 1:ncond
+            temp = doi.data_amplitude(:,i);
+            eval([vnames{i+1} '= temp;']); %super strange!!
+        end
+        temp_str = 'output_table1 = table(ID';
+        for i = 1:ncond
+            temp_str = strcat(temp_str,[',eval(vnames{' int2str(i+1) '})']);
+        end
+        temp_str = [temp_str ');'];
+        eval(temp_str);
+        output_table1.Properties.VariableNames = vnames;
+%        output_table1 = array2table(doi.data_amplitude,'VariableNames',vnames);
+%        writetable(output_table1,['export/export_' poi.name '_amplitude.csv']);
+
+        for i = 2:(ncond+1)
+            vnames{i} = [EEG_ave.eventtypes{i-1} '_'];
             vnames{i} = [vnames{i} poi.name '_' int2str(poi.time(1))];
             vnames{i} = [vnames{i} '_to_' int2str(poi.time(2)) 'ms_' poi.stats_type];
             vnames{i} = [vnames{i} '_latency'];
         end
-        output_table = array2table(doi.data_latency,'VariableNames',vnames);
-        writetable(output_table,['export/export_' poi.name '_latency.csv']);
-    end     
-end
+        for i = 1:ncond
+            temp = doi.data_latency(:,i);
+            eval([vnames{i+1} '= temp;']); %super strange!!
+        end
+        temp_str = 'output_table2 = table(ID';
+        for i = 1:ncond
+            temp_str = strcat(temp_str,[',eval(vnames{' int2str(i+1) '})']);
+        end
+        temp_str = [temp_str ');'];
+        eval(temp_str);
+        output_table2.Properties.VariableNames = vnames;
 
-function [items_pos, items_adjusted] = find_valid_pos(items,list)
-    n = length(list);
-    items_pos = round( (items-list(1))/(list(n)-list(1)) * (n-1))+1;
-    items_pos(find(items_pos<1))=1;
-    items_pos(find(items_pos>n))=n;
-    items_adjusted = list(items_pos);
-    
-    for i = 1:size(items,1)
-        for j = 1:size(items,2)
-            if items(i,j)~=items_adjusted(i,j)
-                fprintf('time %d adjusted to %d\n', items(i,j),items_adjusted(i,j));
-            end
+%        output_table2 = array2table(doi.data_latency,'VariableNames',vnames);
+%        writetable(output_table2,['export/export_' poi.name '_latency.csv']);
+        output_table = join(output_table1,output_table2);
+        if isempty(EEG_ave.group_name)
+            writetable(output_table,['export/export_' poi.name '_amplitude_latency.csv']);
+        else
+            writetable(output_table,['export/export_' EEG_ave.group_name '_' poi.name '_amplitude_latency.csv']);
         end
     end
+ 
 end
 
-
-function print_t_result(h,p,stats)
-    if h==0
-        fprintf(' not significant.\n');
-    else
-        fprintf(' significant.\n');
+function data_plot_table = export_data_plot(EEG_ave,poi,data_plot)
+            %export data_plot
+    for i = 1:length(EEG_ave.eventtypes)
+        if isempty(EEG_ave.group_name)
+            data_plot_rownames{i,1} = [poi.name '_' EEG_ave.eventtypes{i}];
+        else
+            data_plot_rownames{i,1} = [EEG_ave.group_name '_' poi.name '_' EEG_ave.eventtypes{i}];
+        end
     end
-    fprintf('t(%d)=%.3f, p=%.3f\n',stats.df,stats.tstat,p);
+    data_plot_vname = cell2table(data_plot_rownames,'VariableNames',{'vname'});
+    data_plot_value = array2table(data_plot);
+    data_plot_table = [data_plot_vname,data_plot_value];
+    if isempty(EEG_ave.group_name)
+        writetable(data_plot_table,['export/for_plot_' poi.name '.csv']);
+    else
+        writetable(data_plot_table,['export/for_plot_' EEG_ave.group_name '_' poi.name '.csv'])
+    end
 end
-
