@@ -1,3 +1,8 @@
+%20200731, added optional input, plot_or_not = 1 or 0
+%if plot_or_not = 0, export all conditions
+%if plot_or_not = 1, only use 2 conditions
+%20200731, changed get_2_condition to get_n_conditions
+
 %20200327, added id
 
 %20141202, get the mean of one frequency from the IE for later full head plotting
@@ -25,15 +30,25 @@
 %20180711, added oscillation_type field
 
 function [ALLEEG_ERSP,ALLEEG_ITC] = ITC_prepare_data_for_heatmap_individual(foi_struct,net_type,...
-    selected_conditions)
+    selected_conditions, plot_or_not)
 
     ncond = length(foi_struct.category_names);
-
+    
+    if nargin == 3
+        plot_or_not = 1;
+    end
+    
     if ncond>1
-        if nargin==2
-            selected_conditions = [1,2];   
+        if plot_or_not ==1
+            if nargin==2
+                selected_conditions = [1,2];   
+            end
+            if length(selected_conditions) ~=2
+                fprintf('heatmap plot only works for 2 conditions at a time\n');
+                return
+            end
         end
-        foi_struct = get_2_conditions(foi_struct,selected_conditions);
+        foi_struct = get_n_conditions(foi_struct,selected_conditions);
     end
 
     ALLEEG_ERSP = compose_EEG_structure(foi_struct,'ERSP',net_type);
@@ -124,25 +139,20 @@ end
 %everything till the second dot(.).
 
 
-%get the specific 2 condition from multiple. need to split all the fields
-function foi_struct2 = get_2_conditions(foi_struct,selected_conditions)
+%get the specific n condition from multiple. need to split all the fields
+function foi_structn = get_n_conditions(foi_struct,selected_conditions)
 
     if length(foi_struct.category_names)==2 && selected_conditions(1)==1 && selected_conditions(2)==2
-        foi_struct2 = foi_struct;
+        foi_structn = foi_struct;
         return
     end
 
-    if length(selected_conditions) ~=2
-        fprintf('can only pick 2 conditions! Abort.\n')
-        return
-    end
-
-    foi_struct2 = foi_struct;
+    foi_structn = foi_struct;
     for i = 1:length(selected_conditions)
-        foi_struct2.category_names{i} = foi_struct.category_names{selected_conditions(i)};    
+        foi_structn.category_names{i} = foi_struct.category_names{selected_conditions(i)};    
     end
 
-    foi_struct2.ERSP = foi_struct.ERSP(:,selected_conditions,:,:);
-    foi_struct2.ITC = foi_struct.ITC(:,selected_conditions,:,:);
+    foi_structn.ERSP = foi_struct.ERSP(:,selected_conditions,:,:);
+    foi_structn.ITC = foi_struct.ITC(:,selected_conditions,:,:);
 
 end

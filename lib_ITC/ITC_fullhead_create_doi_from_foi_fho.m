@@ -1,3 +1,6 @@
+%20200731, changed input cluster and toi to poi
+%poi.channel, poi.name, poi.time
+
 %20200326, rewrite to fit for foi_ERSP and foi_ITC
 %ITC_recompose_to_fullheadmap
 
@@ -15,10 +18,11 @@
 %remove max, useless
 %output: doi
 
-function T_out = ITC_fullhead_create_doi_from_foi_fho(foi_struct,cluster,toi,...
+function T_out = ITC_fullhead_create_doi_from_foi_fho(foi_struct,poi,...
 table_filename)
 
-chan_cluster = cluster.channel;
+chan_cluster = poi.channel;
+toi = poi.time;
 times = foi_struct.times;
 
 nc = length(foi_struct);
@@ -34,7 +38,7 @@ for i = 1:nc
     data = mean(data(1,toi_index(1):toi_index(2),:),2); %average across time index
     data = squeeze(data); %nsubject
     data_out(:,i) = data;
-    labels{i} = [foi_struct(i).setname '_' cluster.name];
+    labels{i} = [foi_struct(i).setname '_' poi.name];
 end
 T_out = table;
 T_out.ID = foi_struct(1).id;
