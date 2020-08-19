@@ -1,9 +1,25 @@
+%20200812, added default if not input cond_to_plot, column_to_plot
+%there is only 1 condition to plot
+%which means cond_to_plot = 1
+%column_to_plot = 2 (column 1 is id)
+
+%thus had to switch the position of items
+%had to go back and fix old scripts again
+
 %input corrintable
 %20191017, replaced bmap to just print significance as white, no direction
 %20191101, a better color contrast, green on light gray
 %20200107, specify one condition and one column to plot, write the names
 
-function item_pos = FH_plot_cor2(corrintable,cond_to_plot,column_to_plot,items)
+%function item_pos = FH_plot_cor2(corrintable,cond_to_plot,column_to_plot,items)
+
+function item_pos = FH_plot_cor2(corrintable,items, cond_to_plot,column_to_plot)
+
+if nargin==2
+    cond_to_plot = 1;
+    column_to_plot = 2;
+end
+
     ncond = size(corrintable,1);
     nitems = length(items);
     alldim = corrintable.Properties.VariableNames;
