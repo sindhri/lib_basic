@@ -1,3 +1,6 @@
+%20200815, removed limiting to 2 conditions so that multiple conditions
+%could be exported
+
 %20200731, added optional input, plot_or_not = 1 or 0
 %if plot_or_not = 0, export all conditions
 %if plot_or_not = 1, only use 2 conditions
@@ -43,10 +46,10 @@ function [ALLEEG_ERSP,ALLEEG_ITC] = ITC_prepare_data_for_heatmap_individual(foi_
             if nargin==2
                 selected_conditions = [1,2];   
             end
-            if length(selected_conditions) ~=2
-                fprintf('heatmap plot only works for 2 conditions at a time\n');
-                return
-            end
+%            if length(selected_conditions) ~=2
+%                fprintf('heatmap plot only works for 2 conditions at a time\n');
+%                return
+%            end
         end
         foi_struct = get_n_conditions(foi_struct,selected_conditions);
     end
