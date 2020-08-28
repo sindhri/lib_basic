@@ -1,4 +1,10 @@
 %20200825, switch to the global find_id, insteaad of the internal function
+%1, first number
+%2, anything until the first dot
+%3, TS id is either H with a number, or everything before the second dot.
+%4, anything before the second '_'
+%5, first and second number combined as id, leigh data
+
 %20151104, work on single EEG structur
 %operates on each file in one folder
 %20151104
