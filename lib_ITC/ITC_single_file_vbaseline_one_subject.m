@@ -1,3 +1,4 @@
+%20200825, switch to the global find_id, insteaad of the internal function
 %20151104, work on single EEG structur
 %operates on each file in one folder
 %20151104
@@ -20,30 +21,26 @@
 %20170612 added testmode only calculate one subject one condition
 %20170615, change it to only calculate one subject
 %20180412, added downsampling ability to make bomb data compatible
-%20190214, added option for reading .set single ID+condition files
 
 function ITC_single_file_vbaseline_one_subject(category_names,baseline,...
     vbaseline,group_name,id_type,freqs,...
     pathname,result_foldername,testmode, subject_ID,target_rate)
-
 
     file_list = dir(pathname);
 
     m = 1;
     for i = 1:length(file_list)
         temp = file_list(i).name;
-        if strcmp(temp(1),'.')~=1 && strcmp(temp(length(temp)-3:length(temp)),'.raw') || strcmp(temp(length(temp)-3:length(temp)),'.set')
+        if strcmp(temp(1),'.')~=1 && strcmp(temp(length(temp)-3:length(temp)),'.raw')
             filename = temp;
-            [~,~,file_ext] = fileparts(filename);
-            [id, ~] = ITC_find_id(id_type, filename);
+            
+            [id,session] = find_id(id_type,filename);
             
             if strcmp(id,subject_ID)==1
-                if strcmp(file_exp, 'raw')==1
-                
+        
                 [EEG,~] = get_EEG_vbaseline(pathname,filename,...
                     category_names,baseline,vbaseline,group_name,id_type);
-                else
-                    
+                
                 if nargin==10
                     target_rate = EEG.srate;
                 else
@@ -53,18 +50,6 @@ function ITC_single_file_vbaseline_one_subject(category_names,baseline,...
                 ITC_calculation_single_file_vbaseline(EEG,freqs,...
                 result_foldername,testmode);
                 m = m+1;
-                else
-                    if strcmp(file_exp, 'set')==1
-                        EEG = pop_loadset([data_folder filename]);
-                        EEG.group_name = '';
-                        EEG.vbaseline = vbaseline;
-                        freq_limits = [3,30];
-
-                         ITC_calculation_single_file_single_condition(EEG,freq_limits,...
-                            id_type,testmode, result_folder);
-                        m = m+1;
-                    end
-                end
             end
               
             if testmode == 'y'
@@ -79,18 +64,10 @@ function ITC_single_file_vbaseline_one_subject(category_names,baseline,...
     %msgbox('trial count saved in ''trial_count.txt''.');
 end
 
+%20200825, switch to global find_id
 function [EEG,simple_count] = get_EEG_vbaseline(pathname,filename,...
     category_names,baseline,vbaseline,group_name,id_type)
-            switch id_type
-                case 1
-                    [id,session] = find_id(filename);
-                case 2
-                    [id,session] = find_id2(filename);
-                case 3
-                    [id,session] = find_id_TS(filename);
-                case 4
-                    [id,session] = find_id4(filename);
-            end
+         [id,session] = find_id(id_type, filename);
             
             fprintf('%s\n',id);
             EEG = pop_readegi([pathname filename]);
@@ -108,55 +85,10 @@ function [EEG,simple_count] = get_EEG_vbaseline(pathname,filename,...
 end
 
 
+%find_id series, removed 20200825
 %id is the first number in the file string
 %Works for general purpose projects with single visit, 
 %and use only number (instead of letters) as ID
-function [id,session] = find_id(filename) 
-    first = [];
-    last = [];
-    for i = 1:length(filename)
-        if ~isempty(str2num(filename(i))) && isempty(first)
-            first = i;
-            break
-        end
-    end
-    for i = first+1:length(filename)
-        if isempty(str2num(filename(i))) && isempty(last)
-            last = i-1;
-            break
-        end
-    end
-    id = filename(first:last);
-    session = '1';
-end
-
-%id is the digits before the first dot(.), 
-%Works for TRP after replacing . with _
-function [id,session]=find_id2(filename)
-    dots = find(filename=='.');
-    id = filename(1:dots(1)-1);
-    session = '1';
-end
-
-function [id,session]=find_id4(filename)
-    underscores = find(filename=='_');
-    id = filename(1:underscores(1)-2);
-    session = '1';
-end
-
-%id is either H with a number, or everything before the second dot.
-function [id,session]=find_id_TS(filename)
-    if filename(3)=='H'
-        id = find_id(filename);
-        id = strcat('RDH',id);
-        session = '1';
-    else
-        dots = find(filename=='.');
-        id = filename(1:dots(1)-1);
-        session = filename(dots(1)+1:dots(2)-1);
-    end
-end
-
 
 %EEG after using read_egi
 %list the trial numbers for each member in category_names
