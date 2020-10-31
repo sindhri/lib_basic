@@ -13,6 +13,10 @@ if nargin==4
     plot_or_not = 'y';
 end
 
+if nargin==6
+    selected_conditions = [1,2];
+end
+
 foi_struct = ITC_fullhead_recompose_individual(foi,path_result,group_name);
 [foi_ERSP,foi_ITC] = ITC_prepare_data_for_heatmap_individual(foi_struct,net_type,selected_conditions);%prepare data for plotting
 
