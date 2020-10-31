@@ -1,3 +1,5 @@
+%20201030, use 'pospeak' and 'negpeak' to replace '+' and '-'
+%20201030, added group_name as a column in the output_table
 %20200318, use updated doi which has ID has it's own field
 %not with amplitude/latency
 
@@ -145,6 +147,12 @@ function output_table = export_output_table(poi,doi,EEG_ave)
 %        output_table2 = array2table(doi.data_latency,'VariableNames',vnames);
 %        writetable(output_table2,['export/export_' poi.name '_latency.csv']);
         output_table = join(output_table1,output_table2);
+        group = cell(1);
+        for i = 1:size(output_table,1)
+            group{i,1} = EEG_ave.group_name;
+        end
+        output_table = addvars(output_table,group,'After','ID');
+        output_table.group = group;
         if isempty(EEG_ave.group_name)
             writetable(output_table,['export/export_' poi.name '_amplitude_latency.csv']);
         else

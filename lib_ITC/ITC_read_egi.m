@@ -1,4 +1,6 @@
 
+%20201030, skip the file if it is missing some conditions
+%20201030, replaced ITC_find_id with find_id
 %need to think about how to get id from filename for other projects
 %20130718, updated find_id to be, first number till last number
 %20130625, added noncell condition for EEG.epoch(1).eventcategory
@@ -52,7 +54,7 @@ function alleeg = ITC_read_egi(category_names,baseline,group_name,id_type,...
         temp = file_list(i).name;
         if strcmp(temp(1),'.')~=1 && strcmp(temp(length(temp)-3:length(temp)),'.raw')
             filename = temp;
-            id = ITC_find_id(id_type,filename);
+            id = find_id(id_type,filename);
             id_list{m} = id;
             fprintf('%s\n',id);
 
@@ -60,7 +62,11 @@ function alleeg = ITC_read_egi(category_names,baseline,group_name,id_type,...
             [category_names_count,simple_count,sorted_index] = EEG_list_trials(EEG,category_names);
             EEG.id = id;
             if strcmp(type,'ave')==1
-                EEG.data = EEG.data(:,:,sorted_index);
+                if isempty(find(sorted_index==0,1))
+                    EEG.data = EEG.data(:,:,sorted_index);
+                else
+                    continue;
+                end
             end        
             EEG.category_names_count = category_names_count;
             EEG.baseline = baseline;

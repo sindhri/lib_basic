@@ -1,3 +1,5 @@
+%20201030, fixed a bug in TS RDH condition. now it exports RDHid as the id
+%20201030, added session to id for id_type=3, no need of session
 %20191210, updated function name
 %20180412
 %1, first number
@@ -128,12 +130,12 @@ end
 %id is either H with a number, or everything before the second dot.
 function [id,session]=find_id_TS(filename)
     if filename(3)=='H'
-        id = find_id(filename);
+        id = find_id2(filename);
         id = strcat('RDH',id);
         session = '1';
     else
         dots = find(filename=='.');
-        id = filename(1:dots(1)-1);
+        id = filename(1:dots(2)-1);
         session = filename(dots(1)+1:dots(2)-1);
     end
 end
