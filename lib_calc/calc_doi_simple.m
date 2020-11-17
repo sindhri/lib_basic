@@ -30,8 +30,9 @@ ncond = length(EEG_ave.eventtypes);
         [peak_amplitude,peak_latency] = calc_pickpeaking_simple(EEG_ave.data,...
             EEG_ave.times,poi,poi.stats_type);
         ncond = size(EEG_ave.data,3); %hack, used the 3rd dimension
-        for i = 1:length(ncond)-1
-            for j = i+1:length(ncond)
+%        for i = 1:length(ncond)-1 %How could this work in the first place?
+        for i = 1:(ncond-1)
+            for j = (i+1):ncond
                 [h,p,~,stats] = ttest(peak_amplitude(i,:),peak_amplitude(j,:));
                 fprintf('amplitude: %s vs. %s', EEG_ave.eventtypes{i},EEG_ave.eventtypes{j});
                 print_t_result(h,p,stats);

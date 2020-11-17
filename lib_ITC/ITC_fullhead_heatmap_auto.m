@@ -1,3 +1,6 @@
+%20201105, added optional postfix for plotting half of the whole time
+%series, so the initial program can use _1, or _2 to separate them
+
 %20141202
 %makes heatmap provided the ALLEEG structure
 %each EEG is for a condition
@@ -15,8 +18,11 @@
 %and nonlabeled version simultanously
 %20180716, added limits options
 
-function ITC_fullhead_heatmap_auto(ALLEEG, items,limit,limit_diff)
+function ITC_fullhead_heatmap_auto(ALLEEG, items, postfix, limit,limit_diff)
 
+if nargin==2
+    postfix = '';
+end
 
 ncond = length(ALLEEG);
 
@@ -63,7 +69,7 @@ else
     end
 end
 
-if nargin==2
+if nargin<=3
     if strcmp(oscillation_type,'ERSP')==1
         limit = [-temp,temp];
     else
@@ -71,7 +77,7 @@ if nargin==2
     end
 end
 
-if nargin==2
+if nargin<=3
     limit_diff = ALLEEG(3).limit;
 end
 
@@ -86,13 +92,13 @@ for i = 1:ncond
        pop_topoplot(ALLEEG(i),1,items,ALLEEG(i).setname,[1,length(items)],'maplimits',limit);
        set(gcf, 'PaperPosition', paper_position); 
        set(gcf, 'PaperSize', paper_size); 
-       saveas(gcf,['plot_oscillation/pdf/' ALLEEG(i).setname],'pdf');
+       saveas(gcf,['plot_oscillation/pdf/' ALLEEG(i).setname postfix],'pdf');
         close;
 
        pop_topoplot(ALLEEG(i),1,items,ALLEEG(i).setname,[1,length(items)],'maplimits',limit,'electrodes','numbers');
        set(gcf, 'PaperPosition', paper_position); 
        set(gcf, 'PaperSize', paper_size); 
-        saveas(gcf,['plot_oscillation/fig/' ALLEEG(i).setname],'fig');
+        saveas(gcf,['plot_oscillation/fig/' ALLEEG(i).setname postfix],'fig');
        close;
 
         else
@@ -100,13 +106,13 @@ for i = 1:ncond
        pop_topoplot(ALLEEG(i),1,items,ALLEEG(i).setname,[1,length(items)],'maplimits',limit_diff);
        set(gcf, 'PaperPosition', paper_position); 
        set(gcf, 'PaperSize', paper_size); 
-       saveas(gcf,['plot_oscillation/pdf/' ALLEEG(i).setname],'pdf');
+       saveas(gcf,['plot_oscillation/pdf/' ALLEEG(i).setname postfix],'pdf');
         close;
 
        pop_topoplot(ALLEEG(i),1,items,ALLEEG(i).setname,[1,length(items)],'maplimits',limit_diff,'electrodes','numbers');
        set(gcf, 'PaperPosition', paper_position); 
        set(gcf, 'PaperSize', paper_size); 
-        saveas(gcf,['plot_oscillation/fig/' ALLEEG(i).setname],'fig');
+        saveas(gcf,['plot_oscillation/fig/' ALLEEG(i).setname postfix],'fig');
         close;
         end
 

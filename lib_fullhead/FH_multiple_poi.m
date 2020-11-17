@@ -1,3 +1,4 @@
+%20201114, added exporting the final table
 %20201030, put condition_selected into poi, makes more sense
 %20201030, export multiple poi and plot
 % a wrapper arond FH_story1_2
@@ -5,7 +6,7 @@
 %if EEG_ave is multiple, one should be corresponding to a group_name{i}
 %multiple poi
 
-function FH_multiple_poi(EEG_ave, poi, filename_export)
+function final_table = FH_multiple_poi(EEG_ave, poi, filename_export)
 cond_selected = poi.condition_selected;
 
 for j = 1:length(EEG_ave)
