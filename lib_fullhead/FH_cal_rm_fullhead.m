@@ -1,3 +1,4 @@
+% should this one be used instead of FH_cal_all_rm1_2?
 %based on FH_cal_rm
 %can only work with 1 within variable
 %and 1 between variable

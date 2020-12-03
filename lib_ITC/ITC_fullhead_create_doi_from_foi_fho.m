@@ -1,3 +1,5 @@
+%20201201, added time to the labels but it's too long, so removed
+%'anticipation'
 %20200731, changed input cluster and toi to poi
 %poi.channel, poi.name, poi.time
 
@@ -38,7 +40,8 @@ for i = 1:nc
     data = mean(data(1,toi_index(1):toi_index(2),:),2); %average across time index
     data = squeeze(data); %nsubject
     data_out(:,i) = data;
-    labels{i} = [foi_struct(i).setname '_' poi.name];
+    labels{i} = [foi_struct(i).setname '_' poi.name '_' int2str(toi(1)) '_' int2str(toi(2)) 'ms'];
+    labels{i} = regexprep(labels{i}, 'anticipation', '');
 end
 T_out = table;
 T_out.ID = foi_struct(1).id;
@@ -77,8 +80,8 @@ for i = 1:size(toi,1)
 
     if adjusted1 == 1
         fprintf('range of interest %d adjusted to:\n',i);
-        fprintf('%d to %d ms\n',poi_adjusted(i,1),...
-        poi_adjusted(i,2));
+        fprintf('%d to %d ms\n',toi_adjusted(i,1),...
+        toi_adjusted(i,2));
     end
 end    
 end
